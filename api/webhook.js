@@ -1,7 +1,7 @@
 const { Client, validateSignature } = require('@line/bot-sdk');
-const { parseOrder } = require('../lib/parseOrder');
+const { parseOrders, loadProducts, parseDateCompact, formatDateISO } = require('../lib/parseOrder');
 const { buildConfirmMessage } = require('../lib/flex');
-const { appendOrder } = require('../lib/sheets');
+const { appendOrders, hasOrderId } = require('../lib/sheets');
 
 const lineConfig = {
   channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
@@ -91,22 +91,42 @@ async function resolveDisplayName(event) {
   }
 }
 
+/**
+ * Resolves a human-readable name for the chat the order came from, so the
+ * sheet shows which shop/group placed it instead of a raw internal id.
+ * Only "group" chats have a name in LINE's API — "room" chats (unnamed
+ * multi-person chats) and 1:1 chats don't, so those fall back to a plain
+ * label instead.
+ */
+async function resolveChatName(event) {
+  const { source } = event;
+  try {
+    if (source.type === 'group') {
+      const summary = await client.getGroupSummary(source.groupId);
+      return summary.groupName;
+    }
+    if (source.type === 'room') {
+      return 'Unnamed group chat';
+    }
+    return 'Direct message';
+  } catch (e) {
+    // getGroupSummary can fail if the bot was just added and LINE hasn't
+    // synced the group's info yet — fall back rather than failing the flow.
+    return 'Unknown chat';
+  }
+}
+
 async function handleMessage(event) {
   const text = event.message.text;
-  const order = parseOrder(text);
-  if (!order) return null; // Passive listening: ignore anything that isn't order-shaped.
+  const orders = parseOrders(text);
+  if (!orders.length) return null; // Passive listening: ignore anything that isn't order-shaped.
 
-  const groupId = event.source.groupId || event.source.roomId || null;
-  const userName = await resolveDisplayName(event);
+  const [userName, chatName] = await Promise.all([
+    resolveDisplayName(event),
+    resolveChatName(event),
+  ]);
 
-  const fullOrder = {
-    ...order,
-    userId: event.source.userId,
-    userName,
-    groupId,
-  };
-
-  const message = buildConfirmMessage(fullOrder);
+  const message = buildConfirmMessage(orders, { userName, chatName });
   return client.replyMessage(event.replyToken, message);
 }
 
@@ -119,25 +139,46 @@ async function handlePostback(event) {
   }
 
   if (data.a === 'confirm') {
-    await appendOrder({
-      productId: data.p,
-      productName: data.n,
-      quantity: data.q,
-      price: data.pr || null,
-      userName: data.d,
-      groupId: data.g,
+    // LINE can't remove or disable buttons on a message once it's sent, so
+    // this is the actual safeguard against a duplicate: refuse a second
+    // Confirm tap on the same card rather than logging it again.
+    if (await hasOrderId(data.i)) {
+      return client.replyMessage(event.replyToken, {
+        type: 'text',
+        text: 'This order was already confirmed earlier — no need to confirm it again.',
+      });
+    }
+
+    const products = loadProducts();
+    const resolvedOrders = (data.o || []).map((item) => {
+      const product = products.find((p) => p.id === item.p);
+      return {
+        productName: product ? product.name : item.p,
+        quantity: item.q,
+        price: product && typeof product.price === 'number' ? product.price : null,
+        orderDateISO: item.t ? formatDateISO(parseDateCompact(item.t)) : '',
+      };
     });
-    const total = data.pr ? ` (${data.q * data.pr} THB)` : '';
+
+    await appendOrders(resolvedOrders, { userName: data.d, chatName: data.n, orderId: data.i });
+
+    const summary = resolvedOrders.map((o) => `${o.quantity}x ${o.productName}`).join(', ');
+    const grandTotal = resolvedOrders.reduce(
+      (sum, o) => sum + (o.price ? o.price * o.quantity : 0),
+      0
+    );
+    const totalText = grandTotal ? ` (${grandTotal} THB)` : '';
+
     return client.replyMessage(event.replyToken, {
       type: 'text',
-      text: `✅ Order confirmed: ${data.q}x ${data.n}${total} for ${data.d}. Logged to the sheet.`,
+      text: `✅ Order confirmed: ${summary}${totalText} for ${data.d}. Logged to the sheet.`,
     });
   }
 
   if (data.a === 'cancel') {
     return client.replyMessage(event.replyToken, {
       type: 'text',
-      text: `❌ Order cancelled: ${data.q}x ${data.n}.`,
+      text: `❌ Order cancelled.`,
     });
   }
 
