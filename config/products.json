@@ -1,0 +1,20 @@
+[
+  {
+    "id": "keg_lager",
+    "name": "20L Keg of Lager",
+    "keywords": ["lager", "ลาเกอร์"],
+    "price": 2300
+  },
+  {
+    "id": "keg_rose",
+    "name": "20L Keg of Rose",
+    "keywords": ["rose", "rosé", "โรเซ่", "โรเซ"],
+    "price": 2500
+  },
+  {
+    "id": "keg_dunkel",
+    "name": "20L Keg of Dunkel",
+    "keywords": ["dunkel"],
+    "price": 2500
+  }
+]

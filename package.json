@@ -1,0 +1,14 @@
+{
+  "name": "line-order-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A LINE bot that passively listens to a group chat and turns keyword-matched messages into confirmable orders logged to Google Sheets.",
+  "main": "api/webhook.js",
+  "scripts": {
+    "test": "node test/parseOrder.test.js"
+  },
+  "dependencies": {
+    "@line/bot-sdk": "^9.4.2",
+    "googleapis": "^140.0.1"
+  }
+}
