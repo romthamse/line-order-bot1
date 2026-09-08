@@ -1,7 +1,7 @@
 const { Client, validateSignature } = require('@line/bot-sdk');
 const { parseOrders, loadProducts, parseDateCompact, formatDateISO } = require('../lib/parseOrder');
 const { buildConfirmMessage } = require('../lib/flex');
-const { appendOrders, hasOrderId } = require('../lib/sheets');
+const { appendOrders, hasOrderId, deleteOrderRows } = require('../lib/sheets');
 
 const lineConfig = {
   channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
@@ -176,6 +176,19 @@ async function handlePostback(event) {
   }
 
   if (data.a === 'cancel') {
+    // The same Cancel button stays clickable even after Confirm was already
+    // tapped on this card (LINE has no way to disable it), so a tap here
+    // isn't always a no-op — if the order was already written to the sheet,
+    // this is someone changing their mind, and the row(s) should come back
+    // out.
+    const removed = await deleteOrderRows(data.i);
+    if (removed > 0) {
+      return client.replyMessage(event.replyToken, {
+        type: 'text',
+        text: '🗑️ Order was already confirmed — removed it from the sheet.',
+      });
+    }
+
     return client.replyMessage(event.replyToken, {
       type: 'text',
       text: `❌ Order cancelled.`,
