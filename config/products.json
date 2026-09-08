@@ -14,6 +14,8 @@
       "เบียลาเกอ",
       "เบียร์ลาเกอร์"
     ],
+    "shortCodes": ["L"],
+    "strictAfterKeywords": ["เหลือง"],
     "price": 2300
   },
   {
@@ -32,6 +34,8 @@
       "เบียร์แดง",
       "เบียแดง"
     ],
+    "shortCodes": ["R"],
+    "strictAfterKeywords": ["แดง"],
     "price": 2500
   },
   {
@@ -49,6 +53,8 @@
       "เบียร์ดำ",
       "เบียดำ"
     ],
+    "shortCodes": ["D"],
+    "strictAfterKeywords": ["ดำ"],
     "price": 2500
   }
 ]
