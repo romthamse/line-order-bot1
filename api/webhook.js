@@ -54,7 +54,7 @@ async function handler(req, res) {
 }
 
 // Vercel: disable the automatic JSON body parser so we can read the raw
-// body ourselves — required to verify LINE's HMAC signature.
+// body ourselves \u2014 required to verify LINE's HMAC signature.
 handler.config = {
   api: {
     bodyParser: false,
@@ -86,7 +86,7 @@ async function resolveDisplayName(event) {
     return profile.displayName;
   } catch (e) {
     // Profile lookups can fail (e.g. user hasn't added the bot as a
-    // friend) — fall back to a generic label rather than failing the flow.
+    // friend) \u2014 fall back to a generic label rather than failing the flow.
     return 'Someone';
   }
 }
@@ -94,7 +94,7 @@ async function resolveDisplayName(event) {
 /**
  * Resolves a human-readable name for the chat the order came from, so the
  * sheet shows which shop/group placed it instead of a raw internal id.
- * Only "group" chats have a name in LINE's API — "room" chats (unnamed
+ * Only "group" chats have a name in LINE's API \u2014 "room" chats (unnamed
  * multi-person chats) and 1:1 chats don't, so those fall back to a plain
  * label instead.
  */
@@ -111,7 +111,7 @@ async function resolveChatName(event) {
     return 'Direct message';
   } catch (e) {
     // getGroupSummary can fail if the bot was just added and LINE hasn't
-    // synced the group's info yet — fall back rather than failing the flow.
+    // synced the group's info yet \u2014 fall back rather than failing the flow.
     return 'Unknown chat';
   }
 }
@@ -145,7 +145,7 @@ async function handlePostback(event) {
     if (await hasOrderId(data.i)) {
       return client.replyMessage(event.replyToken, {
         type: 'text',
-        text: 'This order was already confirmed earlier — no need to confirm it again.',
+        text: 'This order was already confirmed earlier \u2014 no need to confirm it again.',
       });
     }
 
@@ -171,27 +171,22 @@ async function handlePostback(event) {
 
     return client.replyMessage(event.replyToken, {
       type: 'text',
-      text: `✅ Order confirmed: ${summary}${totalText} for ${data.d}. Logged to the sheet.`,
+      text: `\u2705 Order confirmed: ${summary}${totalText} for ${data.d}. \u0e23\u0e32\u0e22\u0e01\u0e32\u0e23\u0e04\u0e2d\u0e19\u0e40\u0e1f\u0e34\u0e23\u0e4c\u0e21 \u0e41\u0e25\u0e30\u0e19\u0e33\u0e2a\u0e39\u0e48\u0e15\u0e32\u0e23\u0e32\u0e07\u0e2a\u0e48\u0e07\u0e2a\u0e34\u0e19\u0e04\u0e49\u0e32\u0e40\u0e23\u0e35\u0e22\u0e1a\u0e23\u0e49\u0e2d\u0e22`,
     });
   }
 
   if (data.a === 'cancel') {
     // The same Cancel button stays clickable even after Confirm was already
     // tapped on this card (LINE has no way to disable it), so a tap here
-    // isn't always a no-op — if the order was already written to the sheet,
+    // isn't always a no-op \u2014 if the order was already written to the sheet,
     // this is someone changing their mind, and the row(s) should come back
-    // out.
-    const removed = await deleteOrderRows(data.i);
-    if (removed > 0) {
-      return client.replyMessage(event.replyToken, {
-        type: 'text',
-        text: '🗑️ Order was already confirmed — removed it from the sheet.',
-      });
-    }
+    // out. Either way (already confirmed and now removed, or never
+    // confirmed at all) the customer sees the same cancellation message.
+    await deleteOrderRows(data.i);
 
     return client.replyMessage(event.replyToken, {
       type: 'text',
-      text: `❌ Order cancelled.`,
+      text: '\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23\u0e44\u0e14\u0e49\u0e16\u0e39\u0e01\u0e22\u0e01\u0e40\u0e25\u0e34\u0e01 \u0e41\u0e25\u0e30\u0e19\u0e33\u0e2d\u0e2d\u0e01\u0e08\u0e32\u0e01\u0e15\u0e32\u0e23\u0e32\u0e07 \u0e23\u0e32\u0e22\u0e01\u0e32\u0e23\u0e41\u0e25\u0e49\u0e27',
     });
   }
 
