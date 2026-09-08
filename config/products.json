@@ -2,19 +2,47 @@
   {
     "id": "keg_lager",
     "name": "20L Keg of Lager",
-    "keywords": ["lager", "ลาเกอร์"],
+    "keywords": [
+      "lager",
+      "larger",
+      "ลาเกอร์",
+      "ลาเกอ",
+      "ลาเก้อ",
+      "เบียร์สดลาเกอ",
+      "เบียลาเกอ",
+      "เบียร์ลาเกอร์"
+    ],
     "price": 2300
   },
   {
     "id": "keg_rose",
     "name": "20L Keg of Rose",
-    "keywords": ["rose", "rosé", "โรเซ่", "โรเซ"],
+    "keywords": [
+      "rose",
+      "rosé",
+      "โรเซ่",
+      "โรเซ",
+      "โลเซ่",
+      "เบียร์ราสเบอรี่",
+      "เบียร์สีชมพู"
+    ],
     "price": 2500
   },
   {
     "id": "keg_dunkel",
     "name": "20L Keg of Dunkel",
-    "keywords": ["dunkel"],
+    "keywords": [
+      "dunkel",
+      "dunkle",
+      "ดุงเคิ้ล",
+      "ดุงเคิล",
+      "ดุงเกิ้ล",
+      "ดุงเกิล",
+      "ดันเคิล",
+      "ดันเคิ้ล",
+      "เบียร์ดำ",
+      "เบียดำ"
+    ],
     "price": 2500
   }
 ]
